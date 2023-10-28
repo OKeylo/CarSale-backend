@@ -1,32 +1,42 @@
 from fastapi import FastAPI
 import json
 from model import Car
+import aiofiles
 
 
+class DB_Cars:
+    def __init__(self, file_path) -> None:
+        self.path = file_path
+
+    async def get_data(self):
+        async with aiofiles.open(self.path, "r") as file:
+            contents = await file.read()
+        return json.loads(contents)
+    
+    async def save_data(self, data):
+        async with aiofiles.open("cars.json", "w") as file:
+            await file.write(json.dumps(data))
+        return {"status": "success"}
+        
+
+db_cars = DB_Cars("cars.json")
 app = FastAPI()
 
 
 @app.get("/cars")
-def get_cars():
-    try:
-        with open("cars.json") as file:
-            data = json.load(file)["data"]
-        return {"cars": data}
-    except:
-        return {"cars": []}
+async def get_cars():
+    data = await db_cars.get_data()
+
+    return data
 
 
 @app.post("/cars")
-def add_car(car: Car):
-    try:
-        with open("cars.json", "r") as file:
-            data = json.load(file)
-            data["data"].append(car)
-        with open("cars.json", "w") as file:
-            json.dump(data, file)
-    except json.decoder.JSONDecodeError:
-        with open("cars.json", "w") as file:
-            json.dump({"data": [car]}, file)
+async def add_car(car: Car):
+    data = await db_cars.get_data()
+    data.append(car)
+
+    await db_cars.save_data(data=data)
+
     return {"status": "success"}
 
 
