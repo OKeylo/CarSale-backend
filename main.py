@@ -33,8 +33,19 @@ async def get_cars():
 @app.post("/cars")
 async def add_car(car: Car):
     data = await db_cars.get_data()
-    data.append(car)
 
+    new_car: Car = {
+        "id": car["id"],
+        "gos_nomer": car["gos_nomer"],
+        "mark": car["mark"],
+        "model": car["model"],
+        "year": car["year"],
+        "price": car["price"],
+        "fuel": car["fuel"],
+        "power": car["power"],
+        "mileage": car["mileage"],
+    }
+    data.append(new_car)
     await db_cars.save_data(data=data)
 
     return {"status": "success"}
