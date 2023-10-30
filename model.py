@@ -11,3 +11,11 @@ class Car(TypedDict):
     fuel: float
     power: int
     mileage: int
+
+
+class User(TypedDict):
+    id: str
+    username: str
+    email: str
+    password: str
+    sales: list[str]
