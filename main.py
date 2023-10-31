@@ -2,6 +2,7 @@ from fastapi import FastAPI
 import json
 from model import Car
 import aiofiles
+import uuid
 
 
 class DB_Cars:
@@ -35,7 +36,7 @@ async def add_car(car: Car):
     data = await db_cars.get_data()
 
     new_car: Car = {
-        "id": car["id"],
+        "id": str(uuid.uuid4()),
         "gos_nomer": car["gos_nomer"],
         "mark": car["mark"],
         "model": car["model"],
