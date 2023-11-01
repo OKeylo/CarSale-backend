@@ -1,9 +1,13 @@
 from fastapi import FastAPI
+import uvicorn
 import json
 from model import Car
 import aiofiles
 import uuid
 
+def create_data(path):
+    with open(path, "w") as file:
+        file.write(json.dumps([]))
 
 class DB_Cars:
     def __init__(self, file_path) -> None:
@@ -61,3 +65,8 @@ def remove_car(car_id: str):
     with open("cars.json", "w") as file:
         json.dump(data, file)
     return {"status": "success"}
+
+
+if __name__ == "__main__":
+    create_data("cars.json")
+    uvicorn.run(app, host="127.0.0.1", port=8000)
