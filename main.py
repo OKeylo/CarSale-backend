@@ -57,13 +57,12 @@ async def add_car(car: Car):
 
 
 @app.delete("/cars/{car_id}")
-def remove_car(car_id: str):
-    with open("cars.json", "r") as file:
-        data: list[Car] = json.load(file)
-        new_data = [car for car in data["data"] if not (car["id"] == car_id)]
-        data["data"] = new_data
-    with open("cars.json", "w") as file:
-        json.dump(data, file)
+async def remove_car(car_id: str):
+    data = await db_cars.get_data()
+    new_data = [car for car in data if not (car["id"] == car_id)]
+
+    await db_cars.save_data(data=new_data)
+    
     return {"status": "success"}
 
 
