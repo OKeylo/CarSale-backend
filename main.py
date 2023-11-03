@@ -1,9 +1,11 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, Depends
 import uvicorn
 import json
 from model import Car
 import aiofiles
 import uuid
+from fastapi.security import HTTPBasic, HTTPBasicCredentials
+from typing import Annotated
 
 def create_data(path):
     with open(path, "w") as file:
@@ -25,6 +27,7 @@ class DB_Cars:
         
 
 db_cars = DB_Cars("cars.json")
+security = HTTPBasic()
 app = FastAPI()
 
 
@@ -57,12 +60,12 @@ async def add_car(car: Car):
 
 
 @app.delete("/cars/{car_id}")
-async def remove_car(car_id: str):
+async def remove_car(car_id: str, credentials: Annotated[HTTPBasicCredentials, Depends(security)]):
     data = await db_cars.get_data()
     new_data = [car for car in data if not (car["id"] == car_id)]
 
     await db_cars.save_data(data=new_data)
-    
+    return {"username": credentials.username, "password": credentials.password}
     return {"status": "success"}
 
 
