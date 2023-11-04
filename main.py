@@ -71,4 +71,5 @@ async def remove_car(car_id: str, credentials: Annotated[HTTPBasicCredentials, D
 
 if __name__ == "__main__":
     create_data("cars.json")
+    create_data("users.json")
     uvicorn.run(app, host="127.0.0.1", port=8000)
