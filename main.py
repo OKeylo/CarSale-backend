@@ -6,10 +6,12 @@ import aiofiles
 import uuid
 from fastapi.security import HTTPBasic, HTTPBasicCredentials
 from typing import Annotated
+import os
 
 def create_data(path):
-    with open(path, "w") as file:
-        file.write(json.dumps([]))
+    if not os.path.isfile(path):
+        with open(path, "w") as file:
+            file.write(json.dumps([]))
 
 class DB_Cars:
     def __init__(self, file_path) -> None:
