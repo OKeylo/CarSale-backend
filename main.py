@@ -26,9 +26,24 @@ class DB_Cars:
         async with aiofiles.open("cars.json", "w") as file:
             await file.write(json.dumps(data))
         return {"status": "success"}
+    
+class DB_Users:
+    def __init__(self,file_path) -> None:
+        self.path = file_path
+
+    async def get_data(self):
+        async with aiofiles.open(self.path, "r") as file:
+            contents = await file.read()
+        return json.loads(contents)
+    
+    async def save_data(self, data):
+        async with aiofiles.open(self.path, "w") as file:
+            await file.write(json.dumps(data))
+        return {"status": "success"}
         
 
 db_cars = DB_Cars("cars.json")
+db_users = DB_Users("users.json")
 security = HTTPBasic()
 app = FastAPI()
 
@@ -70,6 +85,15 @@ async def remove_car(car_id: str, credentials: Annotated[HTTPBasicCredentials, D
     return {"username": credentials.username, "password": credentials.password}
     return {"status": "success"}
 
+
+@app.post("/users")
+async def add_user(user):
+    data = await db_users.get_data()
+
+    data.append(user)
+    await db_users.save_data(data=data)
+
+    return {"status": "success"}
 
 if __name__ == "__main__":
     create_data("cars.json")
