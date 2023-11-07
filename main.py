@@ -48,14 +48,14 @@ security = HTTPBasic()
 app = FastAPI()
 
 
-@app.get("/cars")
+@app.get("/cars", tags=["car"])
 async def get_cars():
     data = await db_cars.get_data()
 
     return data
 
 
-@app.post("/cars")
+@app.post("/cars", tags=["car"])
 async def add_car(car: Car):
     data = await db_cars.get_data()
 
@@ -76,7 +76,7 @@ async def add_car(car: Car):
     return {"status": "success"}
 
 
-@app.delete("/cars/{car_id}")
+@app.delete("/cars/{car_id}", tags=["car"])
 async def remove_car(car_id: str, credentials: Annotated[HTTPBasicCredentials, Depends(security)]):
     data = await db_cars.get_data()
     new_data = [car for car in data if not (car["id"] == car_id)]
@@ -86,7 +86,7 @@ async def remove_car(car_id: str, credentials: Annotated[HTTPBasicCredentials, D
     return {"status": "success"}
 
 
-@app.post("/users")
+@app.post("/users", tags=["user"])
 async def add_user(user):
     data = await db_users.get_data()
 
