@@ -9,7 +9,7 @@ from typing import Annotated
 import os
 
 def create_data(path):
-    if not os.path.isfile(path):
+    if (not os.path.isfile(path)) or (os.stat(path).st_size == 0):
         with open(path, "w") as file:
             file.write(json.dumps([]))
 
