@@ -7,11 +7,50 @@ import uuid
 from fastapi.security import HTTPBasic, HTTPBasicCredentials
 from typing import Annotated
 import os
+from random import choice, randint, uniform, choices
+import string
+
+def create_cars() -> list[Car]:
+    def create_gos_nomer(cars: list[Car]):
+        cars_letters: str = "АВЕИКМНОРСТУХ"
+        cars_numbers: str = "0123456789"
+
+        while True:
+            letters: str = ''.join(choices(cars_letters, k=3))
+            numbers: str = ''.join(choices(cars_numbers, k=3))
+            gos_nomer: str = letters[0] + numbers + letters[1:]
+
+            if gos_nomer not in [car["gos_nomer"] for car in cars]:
+                return gos_nomer
+
+    cars: list[Car] = []
+    car_marks: list[str] = ["BMW", "Audi", "Nissan", "Porsche", "Honda"] * 10
+    car_year: list[int] = [randint(2010, 2023) for _ in range(50)]
+    car_fuel: list[float] = [uniform(2.0, 4.0) for _ in range(50)]
+
+    for i in range(len(car_marks)):
+        car: Car = {
+            "id": str(uuid.uuid4()),
+            "gos_nomer": create_gos_nomer(cars),
+            "mark": car_marks.pop(randint(0, len(car_marks) - 1)),
+            "model": choice(string.ascii_uppercase) + str(randint(1, 9)),
+            "year": car_year.pop(randint(0, len(car_year) - 1)),
+            "fuel": round(car_fuel.pop(randint(0, len(car_fuel) - 1)), 1),
+            "power": randint(100, 600),
+            "price": randint(1000, 4000)*1000,
+            "mileage": randint(20_000, 200_000),
+        }
+        cars.append(car)
+
+    return cars
 
 def create_data(path):
     if (not os.path.isfile(path)) or (os.stat(path).st_size == 0):
+        data = []
+        if path == "cars.json":
+            data = create_cars()
         with open(path, "w") as file:
-            file.write(json.dumps([]))
+            file.write(json.dumps(data))
 
 class DB_Cars:
     def __init__(self, file_path) -> None:
