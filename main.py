@@ -1,7 +1,7 @@
 from fastapi import FastAPI, Depends
 import uvicorn
 import json
-from model import Car
+from model import Car, User
 import aiofiles
 import uuid
 from fastapi.security import HTTPBasic, HTTPBasicCredentials
@@ -126,10 +126,17 @@ async def remove_car(car_id: str, credentials: Annotated[HTTPBasicCredentials, D
 
 
 @app.post("/users", tags=["user"])
-async def add_user(user):
+async def add_user(user: User):
     data = await db_users.get_data()
 
-    data.append(user)
+    new_user: User = {
+        "id": str(uuid.uuid4()),
+        "username": user["username"],
+        "email": user["email"],
+        "password": user["password"],
+        "sales": user["sales"]
+    }
+    data.append(new_user)
     await db_users.save_data(data=data)
 
     return {"status": "success"}
