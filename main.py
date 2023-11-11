@@ -9,6 +9,12 @@ from typing import Annotated
 import os
 from random import choice, randint, uniform, choices
 import string
+import secrets
+
+def create_password():
+    alphabet = string.ascii_letters + string.digits
+    password = ''.join(secrets.choice(alphabet) for _ in range(8))
+    return password
 
 def create_cars() -> list[Car]:
     def create_gos_nomer(cars: list[Car]):
@@ -141,6 +147,7 @@ async def add_user(user: User):
     return {"status": "success"}
 
 if __name__ == "__main__":
+    print(create_password())
     create_data("cars.json")
     create_data("users.json")
     uvicorn.run(app, host="127.0.0.1", port=8000)
