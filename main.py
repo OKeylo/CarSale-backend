@@ -134,7 +134,6 @@ async def add_user(user: User):
         "username": user["username"],
         "email": user["email"],
         "password": user["password"],
-        "sales": user["sales"]
     }
     data.append(new_user)
     await db_users.save_data(data=data)

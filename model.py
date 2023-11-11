@@ -18,4 +18,3 @@ class User(TypedDict):
     username: str
     email: str
     password: str
-    sales: list[str]
