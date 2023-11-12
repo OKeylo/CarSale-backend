@@ -16,5 +16,14 @@ class Car(TypedDict):
 class User(TypedDict):
     id: str
     username: str
-    email: str
     password: str
+    phone: str
+
+class UserLogin(TypedDict):
+    username: str
+    password: str
+
+class UserRegister(TypedDict):
+    username: str
+    password: str
+    phone: str
