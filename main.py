@@ -190,6 +190,32 @@ async def user_login(user: UserLogin):
         detail="Неверный логин или пароль!"
     )
 
+@app.get("/user/{user_id}", tags=["user"])
+async def get_user_by_id(user_id: str):
+    data = await db_users.get_data()
+
+    user: User = dict(*[i for i in data if i["id"] == user_id])
+    if user:
+        return user
+    
+    raise HTTPException(
+        status_code=406,
+        detail="Не найдено пользователя с таким id!"
+    )
+
+@app.get("/user/me/{user_username}", tags=["user"])
+async def get_user_by_username(user_username: str):
+    data = await db_users.get_data()
+
+    user: User = dict(*[i for i in data if i["username"] == user_username])
+    if user:
+        return user
+    
+    raise HTTPException(
+        status_code=406,
+        detail="Не найдено пользователя с таки именем!!"
+    )
+
 if __name__ == "__main__":
     create_data("cars.json")
     create_data("users.json")
