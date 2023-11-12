@@ -1,4 +1,4 @@
-from fastapi import FastAPI, Depends
+from fastapi import FastAPI, Depends, HTTPException, status
 import uvicorn
 import json
 from model import Car, User
@@ -92,6 +92,21 @@ db_users = DB_Users("users.json")
 security = HTTPBasic()
 app = FastAPI()
 
+async def check_user(
+    credentials: Annotated[HTTPBasicCredentials, Depends(security)]
+):
+    data: list[User] = await db_users.get_data()
+
+    user: User = dict(*[i for i in data if i["username"] == credentials.username])
+    if user and user["password"] == credentials.password:
+        return True
+    
+    raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Incorrect email or password",
+            headers={"WWW-Authenticate": "Basic"},
+        )
+
 
 @app.get("/cars", tags=["car"])
 async def get_cars():
@@ -121,13 +136,12 @@ async def add_car(car: Car):
     return {"status": "success"}
 
 
-@app.delete("/cars/{car_id}", tags=["car"])
-async def remove_car(car_id: str, credentials: Annotated[HTTPBasicCredentials, Depends(security)]):
+@app.delete("/cars/{car_id}", tags=["car"], dependencies=[Depends(check_user)])
+async def remove_car(car_id: str):
     data = await db_cars.get_data()
     new_data = [car for car in data if not (car["id"] == car_id)]
 
     await db_cars.save_data(data=new_data)
-    return {"username": credentials.username, "password": credentials.password}
     return {"status": "success"}
 
 
@@ -147,7 +161,6 @@ async def add_user(user: User):
     return {"status": "success"}
 
 if __name__ == "__main__":
-    print(create_password())
     create_data("cars.json")
     create_data("users.json")
     uvicorn.run(app, host="127.0.0.1", port=8000)
