@@ -1,7 +1,7 @@
 from fastapi import FastAPI, Depends, HTTPException, status
 import uvicorn
 import json
-from model import Car, User
+from model import Car, User, UserLogin, UserRegister
 import aiofiles
 import uuid
 from fastapi.security import HTTPBasic, HTTPBasicCredentials
@@ -10,6 +10,7 @@ import os
 from random import choice, randint, uniform, choices
 import string
 import secrets
+from fastapi.middleware.cors import CORSMiddleware
 
 def create_password():
     alphabet = string.ascii_letters + string.digits
@@ -92,6 +93,14 @@ db_users = DB_Users("users.json")
 security = HTTPBasic()
 app = FastAPI()
 
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
 async def check_user(
     credentials: Annotated[HTTPBasicCredentials, Depends(security)]
 ):
@@ -145,20 +154,41 @@ async def remove_car(car_id: str):
     return {"status": "success"}
 
 
-@app.post("/users", tags=["user"])
-async def add_user(user: User):
+@app.post("/user/signup", tags=["user"])
+async def add_user(user: UserRegister):
     data = await db_users.get_data()
+
+    check_username_exist = dict(*[i for i in data if i["username"] == user["username"] or i["phone"] == user["phone"]])
+    if check_username_exist:
+        raise HTTPException(
+        status_code=406,
+        detail="Пользователь с таким именем или телефоном уже существует!"
+        )
 
     new_user: User = {
         "id": str(uuid.uuid4()),
         "username": user["username"],
-        "email": user["email"],
         "password": user["password"],
+        "phone": user["phone"],
     }
     data.append(new_user)
-    await db_users.save_data(data=data)
 
+    await db_users.save_data(data=data)
     return {"status": "success"}
+
+
+@app.post("/user/login", tags=["user"])
+async def user_login(user: UserLogin):
+    data = await db_users.get_data()
+
+    user_bd: User = dict(*[i for i in data if i["username"] == user["username"]])
+    if user_bd and user_bd["password"] == user["password"]:
+        return True
+    
+    raise HTTPException(
+        status_code=406,
+        detail="Неверный логин или пароль!"
+    )
 
 if __name__ == "__main__":
     create_data("cars.json")
