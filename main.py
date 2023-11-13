@@ -1,7 +1,7 @@
 from fastapi import FastAPI, Depends, HTTPException, status
 import uvicorn
 import json
-from model import Car, User, UserLogin, UserRegister
+from model import Car, User, UserLogin, UserRegister, addCar
 import aiofiles
 import uuid
 from fastapi.security import HTTPBasic, HTTPBasicCredentials
@@ -124,25 +124,26 @@ async def check_user(
 async def get_cars():
     data = await db_cars.get_data()
 
-    return data
+    return data[::-1]
 
 
 @app.get("/cars/{user_id}", tags=["car"])
 async def get_cars_by_user_id(user_id: str):
     data = await db_cars.get_data()
 
-    user_data = [car for car in data if car["author_id"] == user_id]
+    user_data = [car for car in data if car["author_id"] == user_id][::-1]
 
     return user_data
 
 
-@app.post("/cars", tags=["car"])
-async def add_car(car: Car):
+@app.post("/cars", tags=["car"], dependencies=[Depends(check_user)])
+async def add_car(car: addCar):
+    print("WHAT HAPPENED???")
     data = await db_cars.get_data()
 
     new_car: Car = {
         "id": str(uuid.uuid4()),
-        "gos_nomer": car["gos_nomer"],
+        "author_id": car["author_id"],
         "mark": car["mark"],
         "model": car["model"],
         "year": car["year"],
