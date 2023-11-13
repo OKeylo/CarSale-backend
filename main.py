@@ -11,6 +11,7 @@ from random import choice, randint, uniform, choices
 import string
 import secrets
 from fastapi.middleware.cors import CORSMiddleware
+import base64
 
 def create_password():
     alphabet = string.ascii_letters + string.digits
@@ -105,9 +106,11 @@ async def check_user(
     credentials: Annotated[HTTPBasicCredentials, Depends(security)]
 ):
     data: list[User] = await db_users.get_data()
+    username_decoded = base64.b64decode(credentials.username).decode('utf-8')
+    password_decoded = base64.b64decode(credentials.password).decode('utf-8')
 
-    user: User = dict(*[i for i in data if i["username"] == credentials.username])
-    if user and user["password"] == credentials.password:
+    user: User = dict(*[i for i in data if i["username"] == username_decoded])
+    if user and user["password"] == password_decoded:
         return True
     
     raise HTTPException(
@@ -122,6 +125,15 @@ async def get_cars():
     data = await db_cars.get_data()
 
     return data
+
+
+@app.get("/cars/{user_id}", tags=["car"])
+async def get_cars_by_user_id(user_id: str):
+    data = await db_cars.get_data()
+
+    user_data = [car for car in data if car["author_id"] == user_id]
+
+    return user_data
 
 
 @app.post("/cars", tags=["car"])
