@@ -3,6 +3,7 @@ from typing_extensions import TypedDict
 
 class Car(TypedDict):
     id: str
+    author_id: str
     gos_nomer: str
     mark: str
     model: str
