@@ -9,41 +9,21 @@ from typing import Annotated
 import os
 from random import choice, randint, uniform, choices
 import string
-import secrets
 from fastapi.middleware.cors import CORSMiddleware
 import base64
 
-def create_password():
-    alphabet = string.ascii_letters + string.digits
-    password = ''.join(secrets.choice(alphabet) for _ in range(8))
-    return password
-
-def create_cars() -> list[Car]:
-    def create_gos_nomer(cars: list[Car]):
-        cars_letters: str = "АВЕИКМНОРСТУХ"
-        cars_numbers: str = "0123456789"
-
-        while True:
-            letters: str = ''.join(choices(cars_letters, k=3))
-            numbers: str = ''.join(choices(cars_numbers, k=3))
-            gos_nomer: str = letters[0] + numbers + letters[1:]
-
-            if gos_nomer not in [car["gos_nomer"] for car in cars]:
-                return gos_nomer
-
+def create_cars(users: list[User]) -> list[Car]:
+    car_marks: list[str] = ["BMW", "Audi", "Nissan", "Porsche", "Honda", "Mazda", "Lada"]
+    
     cars: list[Car] = []
-    car_marks: list[str] = ["BMW", "Audi", "Nissan", "Porsche", "Honda"] * 10
-    car_year: list[int] = [randint(2010, 2023) for _ in range(50)]
-    car_fuel: list[float] = [uniform(2.0, 4.0) for _ in range(50)]
-
-    for i in range(len(car_marks)):
+    for _ in range(30):
         car: Car = {
             "id": str(uuid.uuid4()),
-            "gos_nomer": create_gos_nomer(cars),
-            "mark": car_marks.pop(randint(0, len(car_marks) - 1)),
+            "author_id": choice(users)["id"],
+            "mark": choice(car_marks),
             "model": choice(string.ascii_uppercase) + str(randint(1, 9)),
-            "year": car_year.pop(randint(0, len(car_year) - 1)),
-            "fuel": round(car_fuel.pop(randint(0, len(car_fuel) - 1)), 1),
+            "year": randint(2000, 2023),
+            "fuel": round(uniform(2.0, 4.0), 1),
             "power": randint(100, 600),
             "price": randint(1000, 4000)*1000,
             "mileage": randint(20_000, 200_000),
@@ -52,11 +32,45 @@ def create_cars() -> list[Car]:
 
     return cars
 
-def create_data(path):
+def create_users() -> list[User]:
+    def create_username(users: list[User]):
+        vowels_lower = "aeiou"
+        cons_lower = "bcdfghjklmnpqrstvwxyz"
+        cons_upper = "BCDFGHJKLMNPQRSTVWXYZ"
+
+        while True:
+            username: str = f"{choice(cons_upper)}{choice(vowels_lower)}{choice(cons_lower)}{choice(vowels_lower)}"
+            if username not in [user["username"] for user in users]:
+                return username
+    
+    def create_password():
+        alphabet = string.ascii_letters + string.digits
+        password = ''.join(choices(alphabet, k=4))
+        return password
+    
+    def create_phone(users: list[User]):
+        digits = string.digits
+        while True:
+            phone: str = f"+{choice([7,8])} {''.join(choices(digits, k=3))} {''.join(choices(digits, k=3))}-{''.join(choices(digits, k=2))}-{''.join(choices(digits, k=2))}"
+            if phone not in [user["phone"] for user in users]:
+                return phone
+    
+    users: list[User] = []
+    for _ in range(5):
+        user: User = {
+            "id": str(uuid.uuid4()),
+            "username": create_username(users),
+            "password": create_password(),
+            "phone": create_phone(users)
+        }
+        users.append(user)
+
+    return users
+
+def create_data(path, data=[]):
     if (not os.path.isfile(path)) or (os.stat(path).st_size == 0):
-        data = []
-        if path == "cars.json":
-            data = create_cars()
+        if path == "cars.json" and data:
+            data = create_cars(users=data)
         with open(path, "w") as file:
             file.write(json.dumps(data))
 
@@ -138,7 +152,6 @@ async def get_cars_by_user_id(user_id: str):
 
 @app.post("/cars", tags=["car"], dependencies=[Depends(check_user)])
 async def add_car(car: addCar):
-    print("WHAT HAPPENED???")
     data = await db_cars.get_data()
 
     new_car: Car = {
@@ -230,6 +243,7 @@ async def get_user_by_username(user_username: str):
     )
 
 if __name__ == "__main__":
-    create_data("cars.json")
-    create_data("users.json")
+    users: list[User] = create_users()
+    create_data("users.json", data=users)
+    create_data("cars.json", data=users)
     uvicorn.run(app, host="127.0.0.1", port=8000)
